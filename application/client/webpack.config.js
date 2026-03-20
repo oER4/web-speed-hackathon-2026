@@ -58,7 +58,7 @@ const config = {
   },
   output: {
     chunkFilename: "scripts/chunk-[contenthash].js",
-    filename: "scripts/[name].js",
+    filename: "scripts/[name].[contenthash].js",
     path: DIST_PATH,
     publicPath: "auto",
     clean: true,
@@ -72,7 +72,7 @@ const config = {
       NODE_ENV: "production",
     }),
     new MiniCssExtractPlugin({
-      filename: "styles/[name].css",
+      filename: "styles/[name].[contenthash].css",
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -83,7 +83,8 @@ const config = {
       ],
     }),
     new HtmlWebpackPlugin({
-      inject: false,
+      inject: "head",
+      scriptLoading: "defer",
       template: path.resolve(SRC_PATH, "./index.html"),
     }),
     ...(process.env.ANALYZE === "true" ? [new BundleAnalyzerPlugin()] : []),
