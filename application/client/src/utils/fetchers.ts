@@ -1,5 +1,3 @@
-import { gzip } from "pako";
-
 export async function fetchBinary(url: string): Promise<ArrayBuffer> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${res.status}`);
@@ -22,6 +20,7 @@ export async function sendFile<T>(url: string, file: File): Promise<T> {
 }
 
 export async function sendJSON<T>(url: string, data: object): Promise<T> {
+  const { gzip } = await import("pako");
   const uint8Array = new TextEncoder().encode(JSON.stringify(data));
   const compressed = gzip(uint8Array);
 
