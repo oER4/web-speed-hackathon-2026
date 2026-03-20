@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { MouseEvent, useCallback, useId, useMemo } from "react";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
@@ -53,9 +53,16 @@ function parseExifImageDescription(buffer: ArrayBuffer): string {
   return "";
 }
 
-/** ビューポートに入ってから実際の画像バイナリをフェッチするコンテンツ部分 */
-const CoveredImageContent = ({ src }: { src: string }) => {
+interface Props {
+  src: string;
+}
+
+/**
+ * アスペクト比を維持したまま、要素のコンテンツボックス全体を埋めるように画像を拡大縮小します
+ */
+export const CoveredImage = ({ src }: Props) => {
   const dialogId = useId();
+  // ダイアログの背景をクリックしたときに投稿詳細ページに遷移しないようにする
   const handleDialogClick = useCallback((ev: MouseEvent<HTMLDialogElement>) => {
     ev.stopPropagation();
   }, []);
@@ -75,7 +82,7 @@ const CoveredImageContent = ({ src }: { src: string }) => {
   }
 
   return (
-    <>
+    <div className="relative h-full w-full overflow-hidden">
       <img
         alt={alt}
         className="h-full w-full object-cover"
@@ -94,49 +101,14 @@ const CoveredImageContent = ({ src }: { src: string }) => {
       <Modal id={dialogId} closedby="any" onClick={handleDialogClick}>
         <div className="grid gap-y-6">
           <h1 className="text-center text-2xl font-bold">画像の説明</h1>
+
           <p className="text-sm">{alt}</p>
+
           <Button variant="secondary" command="close" commandfor={dialogId}>
             閉じる
           </Button>
         </div>
       </Modal>
-    </>
-  );
-};
-
-interface Props {
-  src: string;
-}
-
-/**
- * アスペクト比を維持したまま、要素のコンテンツボックス全体を埋めるように画像を拡大縮小します。
- * ビューポートに近づいてから画像バイナリをフェッチします（初期帯域節約）。
- */
-export const CoveredImage = ({ src }: Props) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "300px" },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={containerRef} className="relative h-full w-full overflow-hidden">
-      {inView && <CoveredImageContent src={src} />}
     </div>
   );
 };

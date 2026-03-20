@@ -1,5 +1,5 @@
 import dayjs from "@web-speed-hackathon-2026/client/src/utils/dayjs";
-import { memo, MouseEventHandler, useCallback } from "react";
+import { MouseEventHandler, useCallback } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { ImageArea } from "@web-speed-hackathon-2026/client/src/components/post/ImageArea";
@@ -22,15 +22,20 @@ const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Elem
   return false;
 };
 
+/**
+ * @typedef {object} Props
+ * @property {Models.Post} post
+ */
 interface Props {
   post: Models.Post;
-  /** 先頭投稿 (LCP 候補) は true を渡して eager ロードにする */
-  priority?: boolean;
 }
 
-export const TimelineItem = memo(({ post, priority = false }: Props) => {
+export const TimelineItem = ({ post }: Props) => {
   const navigate = useNavigate();
 
+  /**
+   * ボタンやリンク以外の箇所をクリックしたとき かつ 文字が選択されてないとき、投稿詳細ページに遷移する
+   */
   const handleClick = useCallback<MouseEventHandler>(
     (ev) => {
       const isSelectedText = document.getSelection()?.isCollapsed === false;
@@ -42,12 +47,7 @@ export const TimelineItem = memo(({ post, priority = false }: Props) => {
   );
 
   return (
-    <article
-      className="hover:bg-cax-surface-subtle px-1 sm:px-4"
-      // オフスクリーン要素のレンダリングをスキップして TBT を削減
-      style={{ containIntrinsicBlockSize: "250px", contentVisibility: "auto" }}
-      onClick={handleClick}
-    >
+    <article className="hover:bg-cax-surface-subtle px-1 sm:px-4" onClick={handleClick}>
       <div className="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4">
         <div className="shrink-0 grow-0 pr-2 sm:pr-4">
           <Link
@@ -56,9 +56,6 @@ export const TimelineItem = memo(({ post, priority = false }: Props) => {
           >
             <img
               alt={post.user.profileImage.alt}
-              // 先頭投稿は LCP 候補のため eager + fetchpriority=high、それ以外は lazy
-              loading={priority ? undefined : "lazy"}
-              {...(priority ? { fetchpriority: "high" } : {})}
               src={getProfileImagePath(post.user.profileImage.id)}
             />
           </Link>
@@ -106,4 +103,4 @@ export const TimelineItem = memo(({ post, priority = false }: Props) => {
       </div>
     </article>
   );
-});
+};
