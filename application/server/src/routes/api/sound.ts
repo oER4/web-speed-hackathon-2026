@@ -14,17 +14,18 @@ import { extractMetadataFromSound } from "@web-speed-hackathon-2026/server/src/u
 const execAsync = promisify(exec);
 
 // 変換した音声の拡張子
-const EXTENSION = "mp3";
+const EXTENSION = "webm";
 
-async function convertToMp3(inputBuffer: Buffer): Promise<Buffer> {
+async function convertToOpus(inputBuffer: Buffer): Promise<Buffer> {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const inputPath = path.join(tmpdir(), `wsh-input-${id}`);
-  const outputPath = path.join(tmpdir(), `wsh-output-${id}.mp3`);
+  const outputPath = path.join(tmpdir(), `wsh-output-${id}.webm`);
 
   await fs.writeFile(inputPath, inputBuffer);
 
   try {
-    await execAsync(`ffmpeg -y -i ${inputPath} -vn ${outputPath}`);
+    // Opus (WebM コンテナ) に変換: ステレオ・96kbps
+    await execAsync(`ffmpeg -y -i ${inputPath} -vn -c:a libopus -b:a 96k -ac 2 ${outputPath}`);
     return await fs.readFile(outputPath);
   } finally {
     await Promise.all([
@@ -44,15 +45,15 @@ soundRouter.post("/sounds", async (req, res) => {
     throw new httpErrors.BadRequest();
   }
 
-  const mp3 = await convertToMp3(req.body);
+  const opus = await convertToOpus(req.body);
 
   const soundId = uuidv4();
 
-  const { artist, title } = await extractMetadataFromSound(mp3);
+  const { artist, title } = await extractMetadataFromSound(opus);
 
   const filePath = path.resolve(UPLOAD_PATH, `./sounds/${soundId}.${EXTENSION}`);
   await fs.mkdir(path.resolve(UPLOAD_PATH, "sounds"), { recursive: true });
-  await fs.writeFile(filePath, mp3);
+  await fs.writeFile(filePath, opus);
 
   return res.status(200).type("application/json").send({ artist, id: soundId, title });
 });

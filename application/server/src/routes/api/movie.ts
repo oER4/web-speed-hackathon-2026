@@ -13,18 +13,19 @@ import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 const execAsync = promisify(exec);
 
 // 変換した動画の拡張子
-const EXTENSION = "gif";
+const EXTENSION = "webm";
 
-async function convertToGif(inputBuffer: Buffer): Promise<Buffer> {
+async function convertToWebm(inputBuffer: Buffer): Promise<Buffer> {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const inputPath = path.join(tmpdir(), `wsh-input-${id}`);
-  const outputPath = path.join(tmpdir(), `wsh-output-${id}.gif`);
+  const outputPath = path.join(tmpdir(), `wsh-output-${id}.webm`);
 
   await fs.writeFile(inputPath, inputBuffer);
 
   try {
+    // VP9 で WebM に変換: 正方形クロップ・480px・5秒・音声なし
     await execAsync(
-      `ffmpeg -y -i ${inputPath} -t 5 -r 10 -vf "crop='min(iw,ih)':'min(iw,ih)'" -an ${outputPath}`,
+      `ffmpeg -y -i ${inputPath} -t 5 -r 10 -vf "crop='min(iw,ih)':'min(iw,ih)',scale=480:480" -an -c:v libvpx-vp9 -b:v 0 -crf 33 -deadline realtime -row-mt 1 ${outputPath}`,
     );
     return await fs.readFile(outputPath);
   } finally {
@@ -45,13 +46,13 @@ movieRouter.post("/movies", async (req, res) => {
     throw new httpErrors.BadRequest();
   }
 
-  const gif = await convertToGif(req.body);
+  const webm = await convertToWebm(req.body);
 
   const movieId = uuidv4();
 
   const filePath = path.resolve(UPLOAD_PATH, `./movies/${movieId}.${EXTENSION}`);
   await fs.mkdir(path.resolve(UPLOAD_PATH, "movies"), { recursive: true });
-  await fs.writeFile(filePath, gif);
+  await fs.writeFile(filePath, webm);
 
   return res.status(200).type("application/json").send({ id: movieId });
 });

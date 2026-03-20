@@ -22,7 +22,8 @@ imageRouter.post("/images", async (req, res) => {
   }
 
   const jpg = await sharp(req.body)
-    .jpeg()
+    .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 85 })
     .withMetadata()
     .toBuffer();
 
