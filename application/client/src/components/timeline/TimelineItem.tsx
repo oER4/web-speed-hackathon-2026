@@ -1,5 +1,5 @@
 import dayjs from "@web-speed-hackathon-2026/client/src/utils/dayjs";
-import { MouseEventHandler, useCallback } from "react";
+import { memo, MouseEventHandler, useCallback } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { ImageArea } from "@web-speed-hackathon-2026/client/src/components/post/ImageArea";
@@ -30,7 +30,7 @@ interface Props {
   post: Models.Post;
 }
 
-export const TimelineItem = ({ post }: Props) => {
+export const TimelineItem = memo(({ post }: Props) => {
   const navigate = useNavigate();
 
   /**
@@ -47,7 +47,12 @@ export const TimelineItem = ({ post }: Props) => {
   );
 
   return (
-    <article className="hover:bg-cax-surface-subtle px-1 sm:px-4" onClick={handleClick}>
+    <article
+      className="hover:bg-cax-surface-subtle px-1 sm:px-4"
+      // オフスクリーン要素のレンダリングをスキップして TBT を削減
+      style={{ containIntrinsicBlockSize: "250px", contentVisibility: "auto" }}
+      onClick={handleClick}
+    >
       <div className="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4">
         <div className="shrink-0 grow-0 pr-2 sm:pr-4">
           <Link
@@ -56,6 +61,7 @@ export const TimelineItem = ({ post }: Props) => {
           >
             <img
               alt={post.user.profileImage.alt}
+              loading="lazy"
               src={getProfileImagePath(post.user.profileImage.id)}
             />
           </Link>
@@ -103,4 +109,4 @@ export const TimelineItem = ({ post }: Props) => {
       </div>
     </article>
   );
-};
+});

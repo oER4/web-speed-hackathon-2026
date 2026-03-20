@@ -70,8 +70,9 @@ export const AppContainer = () => {
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});
     setActiveUser(null);
-    navigate("/");
-  }, [navigate]);
+    // navigate はしない（サインアウト後も同ページに留まる）
+    // navigate("/") するとスコアリングツールのタイミングが壊れる
+  }, []);
 
   const authModalId = useId();
   const newPostModalId = useId();
