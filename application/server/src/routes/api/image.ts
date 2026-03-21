@@ -6,7 +6,6 @@ import httpErrors from "http-errors";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 
-import { Image } from "@web-speed-hackathon-2026/server/src/models";
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
 // 変換した画像の拡張子
@@ -47,10 +46,11 @@ imageRouter.post("/images", async (req, res) => {
     throw new httpErrors.BadRequest();
   }
 
-  const metadata = await sharp(req.body).metadata();
+  const image = sharp(req.body);
+  const metadata = await image.metadata();
   const alt = metadata.exif ? parseExifAlt(metadata.exif) : "";
 
-  const converted = await sharp(req.body)
+  const converted = await image
     .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
     .avif({ quality: 60 })
     .toBuffer();
@@ -60,8 +60,6 @@ imageRouter.post("/images", async (req, res) => {
   const filePath = path.resolve(UPLOAD_PATH, `./images/${imageId}.${EXTENSION}`);
   await fs.mkdir(path.resolve(UPLOAD_PATH, "images"), { recursive: true });
   await fs.writeFile(filePath, converted);
-
-  await Image.create({ id: imageId, alt });
 
   return res.status(200).type("application/json").send({ id: imageId, alt });
 });
