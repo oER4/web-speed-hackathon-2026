@@ -84,11 +84,14 @@ const config = {
     }),
     new HtmlWebpackPlugin({
       inject: "head",
-      scriptLoading: "blocking",
+      scriptLoading: "defer",
       template: path.resolve(SRC_PATH, "./index.html"),
     }),
     ...(process.env.ANALYZE === "true" ? [new BundleAnalyzerPlugin()] : []),
   ],
+  optimization: {
+    splitChunks: { chunks: "all" },
+  },
   resolve: {
     extensions: [".tsx", ".ts", ".mjs", ".cjs", ".jsx", ".js"],
     alias: {
