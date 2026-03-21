@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AspectRatioBox } from "@web-speed-hackathon-2026/client/src/components/foundation/AspectRatioBox";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
@@ -12,9 +12,17 @@ interface Props {
  * クリックすると再生・一時停止を切り替えます。
  */
 export const PausableMovie = ({ src }: Props) => {
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(!prefersReducedMotion);
+  // SSR との整合性のため、初期値は true（自動再生）に固定し、
+  // useEffect でクライアント側の prefers-reduced-motion を反映する
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIsPlaying(false);
+      videoRef.current?.pause();
+    }
+  }, []);
 
   const handleClick = useCallback(() => {
     setIsPlaying((prev) => {
@@ -37,7 +45,7 @@ export const PausableMovie = ({ src }: Props) => {
       >
         <video
           ref={videoRef}
-          autoPlay={!prefersReducedMotion}
+          autoPlay
           className="h-full w-full object-cover"
           loop
           muted

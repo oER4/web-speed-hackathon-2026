@@ -13,6 +13,48 @@ const UPLOAD_PATH = path.resolve(__dirname, "../upload");
 const DIST_PATH = path.resolve(__dirname, "../dist");
 
 /** @type {import('webpack').Configuration} */
+const ssrConfig = {
+  target: "node",
+  devtool: false,
+  entry: { ssr: path.resolve(SRC_PATH, "./entry-server.tsx") },
+  mode: "production",
+  module: {
+    rules: [
+      {
+        exclude: /node_modules/,
+        test: /\.(jsx?|tsx?|mjs|cjs)$/,
+        use: [{ loader: "babel-loader" }],
+      },
+      {
+        test: /\.css$/i,
+        use: [{ loader: path.resolve(__dirname, "./ssr-null-loader.cjs") }],
+      },
+      {
+        resourceQuery: /binary/,
+        use: [{ loader: path.resolve(__dirname, "./ssr-null-loader.cjs") }],
+      },
+    ],
+  },
+  output: {
+    filename: "[name]-bundle.cjs",
+    path: DIST_PATH,
+    library: { type: "commonjs2" },
+    clean: false,
+  },
+  optimization: {
+    splitChunks: false,
+  },
+  resolve: {
+    extensions: [".tsx", ".ts", ".mjs", ".cjs", ".jsx", ".js"],
+    alias: {
+      "bayesian-bm25$": path.resolve(__dirname, "node_modules", "bayesian-bm25/dist/index.js"),
+      ["kuromoji$"]: path.resolve(__dirname, "node_modules", "kuromoji/build/kuromoji.js"),
+    },
+    fallback: { fs: false, path: false, url: false },
+  },
+};
+
+/** @type {import('webpack').Configuration} */
 const config = {
   devServer: {
     historyApiFallback: true,
@@ -61,7 +103,7 @@ const config = {
     filename: "scripts/[name].[contenthash].js",
     path: DIST_PATH,
     publicPath: "/",
-    clean: true,
+    clean: { keep: /\.cjs$/ },
   },
   plugins: [
     new webpack.ProvidePlugin({}),
@@ -106,4 +148,4 @@ const config = {
   },
 };
 
-module.exports = config;
+module.exports = [config, ssrConfig];
